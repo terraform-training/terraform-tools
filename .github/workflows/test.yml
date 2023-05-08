@@ -1,0 +1,164 @@
+name: 'Test the Code'
+
+env: 
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+
+on:
+  pull_request:
+    branches:
+    - main
+
+jobs:
+
+  test:
+    name: 'Test Terraform Format'
+    strategy:
+      fail-fast: false
+    concurrency: 
+      group: test
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      run: terraform fmt -check -recursive
+  
+  validate:
+    name: 'Validate Terraform Code'
+    strategy:
+      fail-fast: false
+    concurrency: 
+      group: validate
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash {0} # opt out of fail-fast (set -eo pipefail)
+        working-directory: ./terraform
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init -input=false
+
+    # Validate
+    - name: Terraform Validate
+      run: terraform validate
+  
+  tools:
+    strategy:
+      fail-fast: false
+    name: 'Validate Terraform Docs'
+    concurrency: 
+      group: validate
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./
+    
+    steps:
+    
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Install
+      run: terraform version
+  
+    - name: Terraform-docs installation
+      run: |
+        curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+        tar -xzf terraform-docs.tar.gz
+        chmod +x terraform-docs
+        sudo mv terraform-docs /usr/local/bin/terraform-docs
+    
+    - name: Terraform-docs check
+      run: | 
+        mv terraform/README.md terraform/OLDREADME.md && terraform-docs ./terraform
+        cmp -s "terraform/README.md" "terraform/OLDREADME.md" || echo "Documentation not actual; run terraform-docs"
+
+      # Note: there is also a dedicated GH Action 
+      # https://terraform-docs.io/how-to/github-action/
+  
+  sast:
+    name: 'SAST with Checkov'
+    strategy:
+      fail-fast: false
+    concurrency: 
+      group: sast
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    needs: test
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash {0} # opt out of fail-fast (set -eo pipefail)
+        working-directory: ./
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Run Checkov action
+      id: checkov
+      uses: bridgecrewio/checkov-action@master
+      with:
+        quiet: true
+        directory: terraform
+        config_file: .checkov.yaml
+        output_format: cli
+        # Override for full security
+        # soft_fail: false
+        # You can skip accepted malfunctions with skip_check option, for ex.: skip_check: CKV_AWS_144,CKV_AWS_145
+        # skip_check: 
+
+    # - name: Upload Checkov results
+    #   uses: github/codeql-action/upload-sarif@v2
+    #   with:
+    #     # Path to SARIF file relative to the root of the repository
+    #     sarif_file: results.sarif
+    
+  plan:
+    name: 'Terraform plan'
+    strategy:
+      fail-fast: false
+    concurrency: 
+      group: plan
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    needs: [sast, validate]
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash {0} # opt out of fail-fast (set -eo pipefail)
+        working-directory: ./terraform
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Terraform Init
+      run: terraform init -input=false
+      
+    - name: Terraform Plan
+      id: tf_plan
+      run: |
+        terraform plan -input=false -detailed-exitcode
+        result_code=$?
+        echo "{tf_result}={$result_code}" >> $GITHUB_OUTPUT
+        if [ $result_code -eq 1 ]; then echo "::error title=Terraform plan (${GITHUB_REF_NAME})::Error!"; exit 1; fi   
+        if [ $result_code -eq 2 ]; then echo "::warning title=Changes pending! (${GITHUB_REF_NAME})::Terraform plan"; else echo "::notice title=No changes (${GITHUB_REF_NAME})::Terraform plan"; fi

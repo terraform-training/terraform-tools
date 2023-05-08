@@ -1,9 +1,9 @@
 # Local .terraform directories
 **/.terraform/*
 
-# .tfstate files
-*.tfstate
-*.tfstate.*
+# .tfstate files preserved for demo purposes
+# *.tfstate 
+# *.tfstate.*
 
 # Crash log files
 crash.log
@@ -15,6 +15,9 @@ crash.*.log
 # to change depending on the environment.
 *.tfvars
 *.tfvars.json
+
+# include terraform main tfvars
+!terraform.tfvars
 
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
@@ -32,3 +35,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# ignore ssh keys
+*.key
