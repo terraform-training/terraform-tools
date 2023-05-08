@@ -118,11 +118,11 @@ jobs:
       uses: bridgecrewio/checkov-action@master
       with:
         quiet: true
-        directory: terraform
+        directory: .
         config_file: .checkov.yaml
         output_format: cli
         # Override for full security
-        # soft_fail: false
+        soft_fail: false
         # You can skip accepted malfunctions with skip_check option, for ex.: skip_check: CKV_AWS_144,CKV_AWS_145
         # skip_check: 
 
