@@ -1,3 +1,8 @@
-project     = "tools-demo"
-author      = "Maciej"
-bastion_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCnj764X73iwzq//nMY+6xWsHaOVPkEqLGWIJv2Wtl9WDbBmzJvLWRPMmAb1fP3NghXsjtigbHukX+74X0j/uqpuYvNRqPaDJpjei0CkJyHJvj1v+dZEuhGIzclT+eql1aCWMCvIZEKWq/UHj51np6P/fZZ04vzd1ketqJieka4N5CSi/SdI7ilhWogJuJcqb6297qs5MASK6rCCdSYAvWwF1B3kEoYh+v27SVNhqgzZltOr3guAE7KOAv0OUR1Y4EKTHcpIif0ivId8PCP7cuu1TFLeVV+ViWD+jJiwsVG0YW3+5LV/a/YTEpnitQynFgU3vQemJ7PbWR0bnJrOBUV"
+# general
+
+project = "tools-demo"
+author  = "Maciej"
+
+# bastion
+
+bastion_key_filename = "../bastion.key.pub"

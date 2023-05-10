@@ -10,7 +10,7 @@ This documentation is auto-generated!
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_author"></a> [author](#input\_author) | Author | `string` | `"None"` | no |
-| <a name="input_bastion_key"></a> [bastion\_key](#input\_bastion\_key) | Bastion public key | `string` | `null` | no |
+| <a name="input_bastion_key_filename"></a> [bastion\_key\_filename](#input\_bastion\_key\_filename) | Bastion public key filename | `string` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment type | `string` | `"dev"` | no |
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | n/a | yes |
 

@@ -15,13 +15,12 @@ variable "author" {
   description = "Author"
 }
 
-variable "bastion_key" {
+variable "bastion_key_filename" {
   type        = string
-  default     = null
-  description = "Bastion public key"
+  description = "Bastion public key filename"
 
   validation {
-    condition     = startswith(var.bastion_key, "ssh-rsa ")
+    condition     = startswith(file(var.bastion_key_filename), "ssh-rsa ")
     error_message = "Bastion key needs to be public key in OpenSSH format."
   }
 }
