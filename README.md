@@ -1,5 +1,8 @@
 # terraform-tools
+
 Terraform related tools demo
+
+[Slajdy (PDF)](./poza_terraformem_narzedzia.pdf)
 
 ## setup
 
